@@ -1,8 +1,8 @@
 function formatMessage(item) {
-  const message = `[${item.adress}](${formatLocation(item)})
-*${item.cost} kr* • *${item.size} m²* • *${item.rooms} rooms* • ${item.floor} floor
-${item.area} • ${item.yearBuilt || ""} • ${item.yearRebuilt || ""}
-${formatDate(item.moveIn)}
+  const message = `*[${item.adressStreet}](${formatLocation(item)})*, ${item.adressCity}, ${item.area}
+*${formatPrice(item.cost)} kr* • *${item.rooms} rooms* • *${item.size} m²*
+${item.floor} floor • ${item.yearBuilt || ""} ${item.yearRebuilt ? "• " + item.yearRebuilt : ""}
+Move in ${formatDate(item.moveIn)}
 [click for details](${item.link})
 `;
   return escape(message);
@@ -28,6 +28,13 @@ function formatLocation(item) {
   }
   // return `${googleMapsURL}/@${loc.lat},${loc.long},12z?entry=ttu`;
   return `${googleMapsURL}/search/?api=1&query=${item.adress}&ll=${loc.lat}%2C${loc.long}&z=12`;
+}
+
+function formatPrice(price = 0) {
+  const priceStr = `${price}`;
+  const thousands = priceStr.slice(0, -3);
+  const rest = priceStr.slice(-3);
+  return `${thousands} ${rest}`;
 }
 
 module.exports = {

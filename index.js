@@ -29,7 +29,8 @@ bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
 bot.hears("hi", (ctx) => ctx.reply("Hey there"));
 
 bot.hears(/^(\d+) rooms?$/, async (ctx) => {
-  const rooms = ctx.match[1];
+  const roomsStr = ctx.match[1];
+  const rooms = Number(roomsStr);
   await getHomeList(ctx.chat.id, { rooms });
 });
 
@@ -58,14 +59,9 @@ async function getHomeList(chatId, filter = {}) {
   const clients = getClients();
   let homes = [];
   for (const client of clients) {
-    let clientHomes = await client.list();
+    let clientHomes = await client.list(filter);
     if (!clientHomes || !clientHomes.length) {
       continue;
-    }
-
-    // console.log(homes);
-    if (filter.rooms) {
-      clientHomes = clientHomes.filter((h) => h.rooms >= filter.rooms);
     }
     homes.push(...clientHomes);
   }

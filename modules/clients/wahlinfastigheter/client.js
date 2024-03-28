@@ -8,14 +8,17 @@ class Client {
     this.list_homes_url = GET_API_URL;
   }
 
-  async list() {
+  async list(filter = {}) {
     const ts = Date.now().valueOf();
     const url = `${this.list_homes_url}?timestamp=${ts}`;
     try {
       const res = await axios.get(url);
       const data = JSON.parse(res.data.data);
       console.log(data);
-      const homes = await this.convert(data);
+      let homes = await this.convert(data);
+      if (filter.rooms) {
+        homes = homes.filter((h) => h.rooms >= filter.rooms);
+      }
       return homes;
     } catch (error) {
       console.error(error.response);
@@ -30,6 +33,8 @@ class Client {
       const item = {
         id: `w-${ad.Id}`,
         adress: `${ad.Adress1}, ${ad.Adress2}, ${ad.Adress3}`,
+        adressStreet: ad.Adress1,
+        adressCity: ad.Adress3,
         area: ad.AreaName,
         rooms: ad.NoOfRooms,
         cost: ad.Cost,
