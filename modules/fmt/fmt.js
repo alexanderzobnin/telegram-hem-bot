@@ -1,10 +1,30 @@
 function formatMessage(item) {
-  const message = `*[${item.adressStreet}](${formatLocation(item)})*, ${item.adressCity}, ${item.area}
-*${formatPrice(item.cost)} kr* • *${item.rooms} rooms* • *${item.size} m²*
-${item.floor} floor • ${item.yearBuilt || ""} ${item.yearRebuilt ? "• " + item.yearRebuilt : ""}
-Move in ${formatDate(item.moveIn)}
-[click for details](${item.link})
-`;
+  let message = `*[${item.adressStreet}](${formatLocation(item)})*, ${item.adressCity}, ${item.area}\n`;
+  if (item.totalApartments > 1) {
+    message += `*${item.totalApartments} apartments*\n`;
+    if (item.cost != item.costMax) {
+      message += `*${formatPrice(item.cost)} - ${formatPrice(item.costMax)} kr*`;
+    } else {
+      message += `*${formatPrice(item.cost)} kr*`;
+    }
+    message += item.rooms != item.roomsMax ? ` • *${item.rooms} - ${item.roomsMax} rooms*` : ` • *${item.rooms} rooms*`;
+    message += item.size != item.sizeMax ? ` • *${item.size} - ${item.sizeMax} m²*\n` : ` • *${item.size} m²*\n`;
+  } else {
+    message += `*${formatPrice(item.cost)} kr* • *${item.rooms} rooms* • *${item.size} m²*\n`;
+  }
+  if (item.floor) {
+    message += `${item.floor} floor • ${item.yearBuilt || ""} ${item.yearRebuilt ? "• " + item.yearRebuilt : ""}\n`;
+  }
+  if (item.moveIn) {
+    message += `Move in ${formatDate(item.moveIn)}\n`;
+  }
+  message += `${item.source} • ${item.queueType === "Bolotto" ? "🔀" : ""} ${item.queueType}`;
+  if (item.queueType == "queue" && item.queueTime.from) {
+    message += ` \\(${item.queueTime.from} - ${item.queueTime.to} years\\)\n`;
+  } else {
+    message += "\n";
+  }
+  message += `[click for details](${item.link})`;
   return escape(message);
 }
 

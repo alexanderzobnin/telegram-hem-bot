@@ -5,6 +5,7 @@ const GET_API_URL = `${BASE_URL}/rentalobject/Listapartment/published`;
 
 class Client {
   constructor() {
+    this.name = "Wåhlin fastigheter";
     this.list_homes_url = GET_API_URL;
   }
 
@@ -31,6 +32,7 @@ class Client {
     for (let i = 0; i < ads.length; i++) {
       const ad = ads[i];
       const item = {
+        source: this.name,
         id: `w-${ad.Id}`,
         adress: `${ad.Adress1}, ${ad.Adress2}, ${ad.Adress3}`,
         adressStreet: ad.Adress1,
@@ -47,6 +49,7 @@ class Client {
         imageUrl: getImageUrl(ad),
         link: getLink(ad),
         description: ad.DescriptionHtml,
+        queueType: ad.ShowRandomSort ? "Bolotto" : "",
       };
       list.push(item);
     }
