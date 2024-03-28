@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/alexanderzobnin/telegram-hem-bot#readme",
   "dependencies": {
+    "axios": "^1.6.8",
     "dotenv": "^16.4.5",
     "telegraf": "^4.16.3"
   }
