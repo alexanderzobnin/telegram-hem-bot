@@ -12,6 +12,9 @@ function filterItems(items, filters) {
   if (filters.queueMin) {
     filtered = filtered.filter((h) => !h.queueMin || h.queueMin <= filters.queueMin);
   }
+  if (filters.distance) {
+    filtered = filtered.filter((h) => !h.distance || h.distance <= filters.distance);
+  }
   // Remove youth, student and senior apartments
   filtered = filtered.filter((h) => !h.student && !h.senior && !h.youth && !h.short);
   return filtered;

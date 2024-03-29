@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { filterItems } = require("../../filter");
 const { sortBy } = require("../../sort");
+const { getDistanceKm, centralPoint } = require("../../geo");
 
 const BASE_URL = "https://minasidor.wahlinfastigheter.se";
 const GET_API_URL = `${BASE_URL}/rentalobject/Listapartment/published`;
@@ -22,7 +23,7 @@ class Client {
       homes = sortBy(homes, "price");
       return homes;
     } catch (error) {
-      console.error(error.response);
+      console.error(error.response || error);
       return [];
     }
   }
@@ -51,6 +52,9 @@ class Client {
         description: ad.DescriptionHtml,
         queueType: ad.ShowRandomSort ? "Bolotto" : "",
       };
+      if (item.location.lat && item.location.long) {
+        item.distance = getDistanceKm(item.location.lat, item.location.long, centralPoint[0], centralPoint[1]);
+      }
       list.push(item);
     }
     // list = await getImages(list);

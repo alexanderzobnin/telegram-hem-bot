@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { filterItems } = require("../../filter");
 const { sortBy } = require("../../sort");
+const { getDistanceKm, centralPoint } = require("../../geo");
 
 const BASE_URL = "https://bostad.stockholm.se";
 const GET_API_URL = `${BASE_URL}/AllaAnnonser`;
@@ -23,7 +24,7 @@ class Client {
       sortBy(homes, "price");
       return homes;
     } catch (error) {
-      console.error(error.response);
+      console.error(error.response || error);
       return [];
     }
   }
@@ -66,6 +67,9 @@ class Client {
         youth: ad.Ungdom,
         short: ad.Korttid,
       };
+      if (item.location.lat && item.location.long) {
+        item.distance = getDistanceKm(item.location.lat, item.location.long, centralPoint[0], centralPoint[1]);
+      }
       list.push(item);
     }
     // list = await getImages(list);

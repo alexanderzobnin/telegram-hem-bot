@@ -16,6 +16,7 @@ let state = {
     price: 15000,
     size: 75,
     queueMin: 2,
+    distance: 12,
   },
   fetched: {},
 };
@@ -24,7 +25,10 @@ bot.start(async (ctx) => {
   await ctx.reply("Welcome");
   return await ctx.reply(
     "Select actions",
-    Markup.keyboard([["Show apartments", "Filters", "Reset"]])
+    Markup.keyboard([
+      ["Show apartments", "Filters"],
+      ["Reset filters", "Reset cache"],
+    ])
       .oneTime()
       .resize()
   );
@@ -47,8 +51,11 @@ bot.hears("Filters", async (ctx) => {
   return showFilters(ctx);
 });
 
-bot.hears("Reset", async (ctx) => {
+bot.hears("Reset cache", async (ctx) => {
   state.fetched = {};
+});
+
+bot.hears("Reset filters", async (ctx) => {
   state.filters = {};
 });
 
