@@ -1,4 +1,6 @@
 const axios = require("axios");
+const { filterItems } = require("../../filter");
+const { sortBy } = require("../../sort");
 
 const BASE_URL = "https://bostad.stockholm.se";
 const GET_API_URL = `${BASE_URL}/AllaAnnonser`;
@@ -15,11 +17,10 @@ class Client {
     try {
       const res = await axios.get(url);
       const data = res.data;
-      console.log(data);
+      // console.log(data);
       let homes = await this.convert(data);
-      if (filter.rooms) {
-        homes = homes.filter((h) => h.rooms >= filter.rooms);
-      }
+      homes = filterItems(homes, filter);
+      sortBy(homes, "price");
       return homes;
     } catch (error) {
       console.error(error.response);
@@ -41,8 +42,8 @@ class Client {
         area: ad.Stadsdel,
         rooms: ad.AntalRum || ad.HögstaAntalRum,
         roomsMax: ad.LägstaAntalRum,
-        cost: ad.Hyra || ad.LägstaHyran,
-        costMax: ad.HögstaHyran,
+        price: ad.Hyra || ad.LägstaHyran,
+        priceMax: ad.HögstaHyran,
         size: ad.Yta || ad.LägstaYtan,
         sizeMax: ad.HögstaYtan,
         floor: ad.Floor,
@@ -53,15 +54,17 @@ class Client {
         imageUrl: null,
         link: getLink(ad),
         description: ad.DescriptionHtml,
-        queueType: ad.Ko === "Bostadskön" ? "queue" : ad.Ko,
-        queueTime: {
-          from: ad.LiknadeLagenhetStatistik?.KotidFordelningQ1,
-          to: ad.LiknadeLagenhetStatistik?.KotidFordelningQ3,
-        },
+        queueType: ad.Ko === "Bostadskön" ? "Queue" : ad.Ko,
+        queueMin: ad.LiknadeLagenhetStatistik?.KotidFordelningQ1,
+        queueMax: ad.LiknadeLagenhetStatistik?.KotidFordelningQ3,
         lift: ad.Hiss,
         newProduction: ad.Nyproduktion,
         adFrom: ad.AnnonseradFran,
         adTo: ad.AnnonseradTill,
+        senior: ad.Senior,
+        student: ad.Student,
+        youth: ad.Ungdom,
+        short: ad.Korttid,
       };
       list.push(item);
     }

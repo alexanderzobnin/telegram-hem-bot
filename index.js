@@ -7,18 +7,23 @@ const { formatMessage } = require("./modules/fmt/fmt");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
-
 bot.use(Telegraf.log());
 
 let state = {
   chatId: process.env.TELEGRAM_CHAT_ID,
+  filters: {
+    rooms: 3,
+    price: 12000,
+    size: 80,
+  },
+  fetched: {},
 };
 
 bot.start(async (ctx) => {
   await ctx.reply("Welcome");
   return await ctx.reply(
-    "Select filters",
-    Markup.keyboard([["1 room", "2 rooms", "3 rooms", "4 rooms"]])
+    "Select actions",
+    Markup.keyboard([["Show apartments", "Filters", "Reset"]])
       .oneTime()
       .resize()
   );
@@ -28,23 +33,54 @@ bot.help((ctx) => ctx.reply("Send me a sticker"));
 bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
 bot.hears("hi", (ctx) => ctx.reply("Hey there"));
 
-bot.hears(/^(\d+) rooms?$/, async (ctx) => {
-  const roomsStr = ctx.match[1];
-  const rooms = Number(roomsStr);
-  await getHomeList(ctx.chat.id, { rooms });
+bot.command("reset", (ctx) => {
+  state.fetched = {};
+  ctx.reply("State reset");
 });
 
-// bot.on(message("text"), async (ctx) => {
-//   console.log(ctx.message.chat.id);
-//   state.chatId = ctx.chat.id;
-//   // Explicit usage
-//   // await ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
+bot.hears("Show apartments", async (ctx) => {
+  await getHomeList(ctx.chat.id, state.filters);
+});
 
-//   await getHomeList(ctx.chat.id);
+bot.hears("Filters", async (ctx) => {
+  return showFilters(ctx);
+});
 
-//   // Using context shortcut
-//   // await ctx.reply(`Hello ${ctx.state.role}`);
-// });
+bot.hears("Reset", async (ctx) => {
+  state.fetched = {};
+});
+
+bot.command("filters", (ctx) => {
+  return showFilters(ctx);
+});
+
+function showFilters(ctx) {
+  return ctx.reply("Select desired parameters", {
+    parse_mode: "MarkdownV2",
+    ...Markup.inlineKeyboard([
+      [
+        Markup.button.callback("1 room", `{"rooms":1}`),
+        Markup.button.callback("2", `{"rooms":2}`),
+        Markup.button.callback("3", `{"rooms":3}`),
+        Markup.button.callback("4 or more", `{"rooms":4}`),
+      ],
+      [Markup.button.callback("10 000 kr", `{"price":10000}`), Markup.button.callback("15 000 kr", `{"price":15000}`)],
+      [
+        Markup.button.callback("Queue < 2 years", `{"queueMin":2}`),
+        Markup.button.callback("< 5 years", `{"queueMin":5}`),
+        Markup.button.callback("< 10 years", `{"queueMin":10}`),
+      ],
+    ]),
+  });
+}
+
+bot.action(/.+/, (ctx) => {
+  const data = JSON.parse(ctx.match[0]);
+  if (data) {
+    state.filters = { ...state.filters, ...data };
+    return ctx.answerCbQuery(`Filters updated with ${JSON.stringify(data)}`);
+  }
+});
 
 bot.launch(onLaunch);
 
@@ -58,15 +94,24 @@ async function onLaunch() {
 async function getHomeList(chatId, filter = {}) {
   const clients = getClients();
   let homes = [];
+  let hasFetched = false;
   for (const client of clients) {
     let clientHomes = await client.list(filter);
     if (!clientHomes || !clientHomes.length) {
       continue;
     }
+    const total = clientHomes.length;
+    clientHomes = filterFetchedHomes(clientHomes);
+    if (clientHomes.length < total) {
+      hasFetched = true;
+    }
     homes.push(...clientHomes);
+    saveFetchedHomes(clientHomes);
   }
 
-  if (homes.length === 0) {
+  if (homes.length === 0 && hasFetched) {
+    telegram.sendMessage(chatId, "No new apartments found with given criteria");
+  } else if (homes.length === 0) {
     telegram.sendMessage(chatId, "No apartments found with given criteria");
   }
 
@@ -81,6 +126,17 @@ async function getHomeList(chatId, filter = {}) {
       await telegram.sendMessage(chatId, formatMessage(home), { parse_mode: "MarkdownV2" });
     }
   }
+}
+
+function saveFetchedHomes(items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    state.fetched[item.id] = true;
+  }
+}
+
+function filterFetchedHomes(items = []) {
+  return items.filter((item) => !state.fetched[item.id]);
 }
 
 const onSIGINT = () => {

@@ -1,4 +1,6 @@
 const axios = require("axios");
+const { filterItems } = require("../../filter");
+const { sortBy } = require("../../sort");
 
 const BASE_URL = "https://minasidor.wahlinfastigheter.se";
 const GET_API_URL = `${BASE_URL}/rentalobject/Listapartment/published`;
@@ -15,11 +17,9 @@ class Client {
     try {
       const res = await axios.get(url);
       const data = JSON.parse(res.data.data);
-      console.log(data);
       let homes = await this.convert(data);
-      if (filter.rooms) {
-        homes = homes.filter((h) => h.rooms >= filter.rooms);
-      }
+      homes = filterItems(homes, filter);
+      homes = sortBy(homes, "price");
       return homes;
     } catch (error) {
       console.error(error.response);
@@ -39,7 +39,7 @@ class Client {
         adressCity: ad.Adress3,
         area: ad.AreaName,
         rooms: ad.NoOfRooms,
-        cost: ad.Cost,
+        price: ad.Cost,
         size: ad.Size,
         floor: ad.Floor,
         location: { long: ad.Longitude, lat: ad.Latitude },
