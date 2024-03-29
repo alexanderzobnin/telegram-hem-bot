@@ -79,11 +79,21 @@ function showFilters(ctx) {
         Markup.button.callback("< 5 years", `{"queueMin":5}`),
         Markup.button.callback("< 10 years", `{"queueMin":10}`),
       ],
-    ]),
+      [
+        Markup.button.callback("Distance", "0"),
+        Markup.button.callback("any", `{"distance":0}`),
+        Markup.button.callback("10 km", `{"distance":10}`),
+        Markup.button.callback("12", `{"distance":12}`),
+        Markup.button.callback("15", `{"distance":15}`),
+      ],
+    ]).resize(),
   });
 }
 
 bot.action(/.+/, (ctx) => {
+  if (!ctx.match[0]) {
+    return;
+  }
   const data = JSON.parse(ctx.match[0]);
   if (data) {
     state.filters = { ...state.filters, ...data };
