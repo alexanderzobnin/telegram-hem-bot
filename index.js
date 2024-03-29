@@ -12,9 +12,10 @@ bot.use(Telegraf.log());
 let state = {
   chatId: process.env.TELEGRAM_CHAT_ID,
   filters: {
-    rooms: 3,
-    price: 12000,
-    size: 80,
+    rooms: 4,
+    price: 15000,
+    size: 75,
+    queueMin: 2,
   },
   fetched: {},
 };
@@ -48,6 +49,7 @@ bot.hears("Filters", async (ctx) => {
 
 bot.hears("Reset", async (ctx) => {
   state.fetched = {};
+  state.filters = {};
 });
 
 bot.command("filters", (ctx) => {

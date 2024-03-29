@@ -42,8 +42,10 @@ function formatDate(dateTime) {
   });
 }
 
-function escape(str) {
-  return str.replaceAll("-", `\\-`);
+function escape(str = "") {
+  str = str.replaceAll("-", `\\-`);
+  str = str.replaceAll(".", `\\.`);
+  return str;
 }
 
 function formatLocation(item) {
@@ -53,12 +55,13 @@ function formatLocation(item) {
     return "";
   }
   // return `${googleMapsURL}/@${loc.lat},${loc.long},12z?entry=ttu`;
-  return `${googleMapsURL}/search/?api=1&query=${item.adress}&ll=${loc.lat}%2C${loc.long}&z=12`;
+  const adress = encodeURIComponent(item.adress);
+  return `${googleMapsURL}/search/?api=1&query=${adress}`;
 }
 
 function formatItemPrice(item) {
   let priceStr = formatPrice(item.price);
-  if (item.priceMax) {
+  if (item.priceMax && item.priceMax != item.price) {
     priceStr += ` - ${formatPrice(item.priceMax)}`;
   }
   priceStr += " kr";
