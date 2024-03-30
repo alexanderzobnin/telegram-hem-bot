@@ -10,7 +10,7 @@ const telegram = new Telegram(process.env.BOT_TOKEN);
 bot.use(Telegraf.log());
 
 let state = {
-  chatId: process.env.TELEGRAM_CHAT_ID,
+  // chatId: process.env.TELEGRAM_CHAT_ID,
   filters: {
     rooms: 4,
     price: 15000,
@@ -20,6 +20,11 @@ let state = {
   },
   fetched: {},
 };
+
+bot.use(async (ctx, next) => {
+  setChatId(ctx);
+  await next();
+});
 
 bot.start(async (ctx) => {
   await ctx.reply("Welcome");
@@ -43,8 +48,12 @@ bot.command("reset", (ctx) => {
   ctx.reply("State reset");
 });
 
+bot.command("show", async (ctx) => {
+  await getHomeList(ctx.chat.id);
+});
+
 bot.hears("Show apartments", async (ctx) => {
-  await getHomeList(ctx.chat.id, state.filters);
+  await getHomeList(ctx.chat.id);
 });
 
 bot.hears("Filters", async (ctx) => {
@@ -103,14 +112,27 @@ bot.action(/.+/, (ctx) => {
 
 bot.launch(onLaunch);
 
+const HOUR = 1000 * 60 * 60;
 async function onLaunch() {
   if (state.chatId) {
     // telegram.sendMessage(state.chatId, "hello from start");
   }
-  // await getHomeList(state.chatId);
+  setInterval(async () => {
+    await getHomeList(state.chatId, { silent: true });
+  }, HOUR);
 }
 
-async function getHomeList(chatId, filter = {}) {
+function setChatId(ctx) {
+  state.chatId = ctx.chat.id;
+}
+
+async function getHomeList(chatId, options = {}) {
+  const filter = state.filters;
+  if (!chatId) {
+    console.log("chat id not set, skip");
+    return;
+  }
+
   const clients = getClients();
   let homes = [];
   let hasFetched = false;
@@ -128,9 +150,12 @@ async function getHomeList(chatId, filter = {}) {
     saveFetchedHomes(clientHomes);
   }
 
-  if (homes.length === 0 && hasFetched) {
+  if (homes.length === 0) {
+    console.log("No apartments found with given criteria");
+  }
+  if (homes.length === 0 && hasFetched && !options.silent) {
     telegram.sendMessage(chatId, "No new apartments found with given criteria");
-  } else if (homes.length === 0) {
+  } else if (homes.length === 0 && !options.silent) {
     telegram.sendMessage(chatId, "No apartments found with given criteria");
   }
 
