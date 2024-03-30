@@ -114,9 +114,6 @@ bot.launch(onLaunch);
 
 const HOUR = 1000 * 60 * 60;
 async function onLaunch() {
-  if (state.chatId) {
-    // telegram.sendMessage(state.chatId, "hello from start");
-  }
   setInterval(async () => {
     await getHomeList(state.chatId, { silent: true });
   }, HOUR);
