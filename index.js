@@ -9,8 +9,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
 bot.use(Telegraf.log());
 
-let state = {
-  // chatId: process.env.TELEGRAM_CHAT_ID,
+const defaultState = () => ({
   filters: {
     rooms: 4,
     price: 15000,
@@ -19,15 +18,24 @@ let state = {
     distance: 12,
   },
   fetched: {},
-};
+});
+
+let state = {};
+
+function getState(ctx) {
+  const chatId = ctx.chat.id;
+  if !state[chatId] {
+    state[chatId] = defaultState();
+  }
+  return state[chatId];
+}
 
 bot.use(async (ctx, next) => {
-  setChatId(ctx);
   await next();
 });
 
 bot.start(async (ctx) => {
-  await ctx.reply("Welcome");
+  await ctx.reply("Welcome to hembot! 🏡");
   return await ctx.reply(
     "Select actions",
     Markup.keyboard([
@@ -39,9 +47,8 @@ bot.start(async (ctx) => {
   );
 });
 
-bot.help((ctx) => ctx.reply("Send me a sticker"));
-bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
 bot.hears("hi", (ctx) => ctx.reply("Hey there"));
+bot.help((ctx) => ctx.reply("Send me a sticker"));
 
 bot.command("reset", (ctx) => {
   state.fetched = {};
@@ -114,9 +121,37 @@ bot.launch(onLaunch);
 
 const HOUR = 1000 * 60 * 60;
 async function onLaunch() {
-  setInterval(async () => {
-    await getHomeList(state.chatId, { silent: true });
-  }, HOUR);
+  for (const chatId in state) {
+    if (Object.hasOwnProperty.call(state, chatId)) {
+      const clientState = state[chatId];
+
+      setInterval(async () => {
+        try {
+          await getHomeList(chatId, { silent: true });
+        } catch (error) {
+          console.error(error);
+        }
+      }, HOUR);
+    }
+  }
+}
+
+async function onStart(ctx) {
+  const chatId = ctx.chat.id;
+  if !state[chatId] {
+    state[chatId] = defaultState();
+  }
+
+  await ctx.reply("Welcome to hembot! 🏡");
+  return await ctx.reply(
+    "Select actions",
+    Markup.keyboard([
+      ["Show apartments", "Filters"],
+      ["Reset filters", "Reset cache"],
+    ])
+      .oneTime()
+      .resize()
+  );
 }
 
 function setChatId(ctx) {
@@ -124,7 +159,8 @@ function setChatId(ctx) {
 }
 
 async function getHomeList(chatId, options = {}) {
-  const filter = state.filters;
+  const clientState = getState(ctx);
+  const filter = clientState.filters;
   if (!chatId) {
     console.log("chat id not set, skip");
     return;
@@ -144,7 +180,7 @@ async function getHomeList(chatId, options = {}) {
       hasFetched = true;
     }
     homes.push(...clientHomes);
-    saveFetchedHomes(clientHomes);
+    saveFetchedHomes(clientState, clientHomes);
   }
 
   if (homes.length === 0) {
@@ -169,10 +205,10 @@ async function getHomeList(chatId, options = {}) {
   }
 }
 
-function saveFetchedHomes(items) {
+function saveFetchedHomes(clientState, items) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    state.fetched[item.id] = true;
+    clientState.fetched[item.id] = true;
   }
 }
 
