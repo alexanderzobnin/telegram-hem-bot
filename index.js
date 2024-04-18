@@ -5,6 +5,8 @@ const { Telegraf, Telegram, Markup } = require("telegraf");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 
+const HOUR = 1000 * 60 * 60;
+
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
 bot.use(Telegraf.log());
@@ -57,10 +59,12 @@ bot.command("reset", (ctx) => {
 
 bot.command("show", async (ctx) => {
   await getHomeList(ctx);
+  await subscribe(ctx.chat.id);
 });
 
 bot.hears("Show apartments", async (ctx) => {
   await getHomeList(ctx);
+  await subscribe(ctx.chat.id);
 });
 
 bot.hears("Filters", async (ctx) => {
@@ -119,20 +123,19 @@ bot.action(/.+/, (ctx) => {
 
 bot.launch(onLaunch);
 
-const HOUR = 1000 * 60 * 60;
-async function onLaunch() {
-  // for (const chatId in state) {
-  //   if (Object.hasOwnProperty.call(state, chatId)) {
-  //     const clientState = state[chatId];
-  //     setInterval(async () => {
-  //       try {
-  //         await getHomeList(chatId, { silent: true });
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //     }, HOUR);
-  //   }
-  // }
+async function onLaunch() {}
+
+async function subscribe(chatId) {
+  const ctx = {
+    chat: { id: chatId },
+  };
+  setInterval(async () => {
+    try {
+      await getHomeList(ctx, { silent: true });
+    } catch (error) {
+      console.error(error);
+    }
+  }, HOUR);
 }
 
 async function onStart(ctx) {
