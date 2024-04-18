@@ -28,6 +28,8 @@ function formatMessage(item) {
   message += `${item.queueType === "Bolotto" ? "🔀 " : ""}${item.queueType}`;
   if (item.queueType == "Queue" && item.queueMin) {
     message += ` \\(${item.queueMin} - ${item.queueMax} years\\) • `;
+  } else if (item.queueType) {
+    message += " • ";
   }
   message += `${item.source}\n`;
   message += `[click for details](${item.link})`;
