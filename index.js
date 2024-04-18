@@ -55,7 +55,9 @@ bot.hears("hi", (ctx) => ctx.reply("Hey there"));
 bot.help((ctx) => ctx.reply("Send me a sticker"));
 
 bot.command("reset", (ctx) => {
-  state.fetched = {};
+  const clientState = getState(ctx);
+  clientState.fetched = {};
+  saveStateToFile();
   ctx.reply("State reset");
 });
 
