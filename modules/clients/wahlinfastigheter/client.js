@@ -81,6 +81,10 @@ async function getImages(homeList = []) {
 }
 
 function getImageUrl(item) {
+  if (!item.FirstImage?.Guid) {
+    return "";
+  }
+
   const width = 415;
   const height = 280;
   const desc = item.FirstImage;

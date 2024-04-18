@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 require("dotenv").config();
 const { Telegraf, Telegram, Markup } = require("telegraf");
-const { message } = require("telegraf/filters");
+// const { message } = require("telegraf/filters");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 
@@ -11,9 +11,9 @@ bot.use(Telegraf.log());
 
 const defaultState = () => ({
   filters: {
-    rooms: 4,
-    price: 15000,
-    size: 75,
+    rooms: 3,
+    price: 13000,
+    size: 70,
     queueMin: 2,
     distance: 12,
   },
@@ -24,7 +24,7 @@ let state = {};
 
 function getState(ctx) {
   const chatId = ctx.chat.id;
-  if !state[chatId] {
+  if (!state[chatId]) {
     state[chatId] = defaultState();
   }
   return state[chatId];
@@ -56,11 +56,11 @@ bot.command("reset", (ctx) => {
 });
 
 bot.command("show", async (ctx) => {
-  await getHomeList(ctx.chat.id);
+  await getHomeList(ctx);
 });
 
 bot.hears("Show apartments", async (ctx) => {
-  await getHomeList(ctx.chat.id);
+  await getHomeList(ctx);
 });
 
 bot.hears("Filters", async (ctx) => {
@@ -121,24 +121,23 @@ bot.launch(onLaunch);
 
 const HOUR = 1000 * 60 * 60;
 async function onLaunch() {
-  for (const chatId in state) {
-    if (Object.hasOwnProperty.call(state, chatId)) {
-      const clientState = state[chatId];
-
-      setInterval(async () => {
-        try {
-          await getHomeList(chatId, { silent: true });
-        } catch (error) {
-          console.error(error);
-        }
-      }, HOUR);
-    }
-  }
+  // for (const chatId in state) {
+  //   if (Object.hasOwnProperty.call(state, chatId)) {
+  //     const clientState = state[chatId];
+  //     setInterval(async () => {
+  //       try {
+  //         await getHomeList(chatId, { silent: true });
+  //       } catch (error) {
+  //         console.error(error);
+  //       }
+  //     }, HOUR);
+  //   }
+  // }
 }
 
 async function onStart(ctx) {
   const chatId = ctx.chat.id;
-  if !state[chatId] {
+  if (!state[chatId]) {
     state[chatId] = defaultState();
   }
 
@@ -158,7 +157,8 @@ function setChatId(ctx) {
   state.chatId = ctx.chat.id;
 }
 
-async function getHomeList(chatId, options = {}) {
+async function getHomeList(ctx, options = {}) {
+  const chatId = ctx.chat.id;
   const clientState = getState(ctx);
   const filter = clientState.filters;
   if (!chatId) {
@@ -175,7 +175,7 @@ async function getHomeList(chatId, options = {}) {
       continue;
     }
     const total = clientHomes.length;
-    clientHomes = filterFetchedHomes(clientHomes);
+    clientHomes = filterFetchedHomes(clientState, clientHomes);
     if (clientHomes.length < total) {
       hasFetched = true;
     }
@@ -200,7 +200,9 @@ async function getHomeList(chatId, options = {}) {
         parse_mode: "MarkdownV2",
       });
     } else {
-      await telegram.sendMessage(chatId, formatMessage(home), { parse_mode: "MarkdownV2" });
+      await telegram.sendMessage(chatId, formatMessage(home), {
+        parse_mode: "MarkdownV2",
+      });
     }
   }
 }
@@ -212,8 +214,8 @@ function saveFetchedHomes(clientState, items) {
   }
 }
 
-function filterFetchedHomes(items = []) {
-  return items.filter((item) => !state.fetched[item.id]);
+function filterFetchedHomes(clientState, items = []) {
+  return items.filter((item) => !clientState.fetched[item.id]);
 }
 
 const onSIGINT = () => {

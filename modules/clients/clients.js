@@ -1,7 +1,8 @@
 const clientWahlin = require("./wahlinfastigheter/client");
 const clientBostad = require("./bostad-stockholm/client");
+const clientHomeQ = require("./homeq/client");
 
-const clientModules = [clientWahlin, clientBostad];
+const clientModules = [clientWahlin, clientBostad, clientHomeQ];
 
 function getClients() {
   const clients = [];

@@ -27,9 +27,9 @@ function formatMessage(item) {
   // Queue info
   message += `${item.queueType === "Bolotto" ? "🔀 " : ""}${item.queueType}`;
   if (item.queueType == "Queue" && item.queueMin) {
-    message += ` \\(${item.queueMin} - ${item.queueMax} years\\)`;
+    message += ` \\(${item.queueMin} - ${item.queueMax} years\\) • `;
   }
-  message += ` • ${item.source}\n`;
+  message += `${item.source}\n`;
   message += `[click for details](${item.link})`;
   return escape(message);
 }
