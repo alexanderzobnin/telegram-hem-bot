@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 require("dotenv").config();
+const fs = require("node:fs");
 const { Telegraf, Telegram, Markup } = require("telegraf");
 // const { message } = require("telegraf/filters");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 
 const HOUR = 1000 * 60 * 60;
+const stateFileName = "state.json";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
@@ -116,14 +118,22 @@ bot.action(/.+/, (ctx) => {
   }
   const data = JSON.parse(ctx.match[0]);
   if (data) {
-    state.filters = { ...state.filters, ...data };
+    const clientState = getState(ctx);
+    clientState.filters = { ...clientState.filters, ...data };
+    try {
+      saveStateToFile();
+    } catch (err) {
+      console.error(err);
+    }
     return ctx.answerCbQuery(`Filters updated with ${JSON.stringify(data)}`);
   }
 });
 
 bot.launch(onLaunch);
 
-async function onLaunch() {}
+async function onLaunch() {
+  loadStateFromFile();
+}
 
 async function subscribe(chatId) {
   const ctx = {
@@ -208,6 +218,8 @@ async function getHomeList(ctx, options = {}) {
       });
     }
   }
+
+  saveStateToFile();
 }
 
 function saveFetchedHomes(clientState, items) {
@@ -219,6 +231,29 @@ function saveFetchedHomes(clientState, items) {
 
 function filterFetchedHomes(clientState, items = []) {
   return items.filter((item) => !clientState.fetched[item.id]);
+}
+
+function saveStateToFile() {
+  const data = JSON.stringify(state);
+  try {
+    fs.writeFileSync(stateFileName, data);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function loadStateFromFile() {
+  if (!fs.existsSync(stateFileName)) {
+    return;
+  }
+
+  try {
+    const data = fs.readFileSync(stateFileName, "utf8");
+    const loadedState = JSON.parse(data);
+    state = loadedState;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 const onSIGINT = () => {
