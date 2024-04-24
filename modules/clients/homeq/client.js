@@ -3,8 +3,9 @@ const { filterItems } = require("../../filter");
 const { sortBy } = require("../../sort");
 const { getDistanceKm, centralPoint } = require("../../geo");
 
-const BASE_URL = "https://search.homeq.se";
-const SEARCH_API_URL = `${BASE_URL}/api/v3/search`;
+const BASE_URL = "https://homeq.se";
+const BASE_SEARCH_URL = "https://search.homeq.se";
+const SEARCH_API_URL = `${BASE_SEARCH_URL}/api/v3/search`;
 
 class Client {
   constructor() {
