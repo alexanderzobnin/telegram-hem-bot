@@ -5,6 +5,7 @@ const { Telegraf, Telegram, Markup } = require("telegraf");
 // const { message } = require("telegraf/filters");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
+const { Crawler } = require("./modules/crawler");
 
 let envFilePath = ".env.dev";
 if (process.env.NODE_ENV === "production") {
@@ -145,6 +146,9 @@ bot.launch(onLaunch);
 
 async function onLaunch() {
   loadStateFromFile();
+
+  const crawler = new Crawler();
+  crawler.run();
 }
 
 async function subscribe(chatId) {
