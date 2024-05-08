@@ -7,4 +7,4 @@ COPY . .
 
 RUN yarn install
 
-CMD ["node", "index.js"]
+CMD ["node", "src/index.js"]
