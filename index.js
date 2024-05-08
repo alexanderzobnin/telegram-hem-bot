@@ -1,10 +1,20 @@
 #!/usr/bin/env node
-require("dotenv").config();
+
 const fs = require("node:fs");
 const { Telegraf, Telegram, Markup } = require("telegraf");
 // const { message } = require("telegraf/filters");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
+
+let envFilePath = ".env.dev";
+if (process.env.NODE_ENV === "production") {
+  envFilePath = ".env";
+}
+
+require("dotenv").config({ path: envFilePath });
+
+console.log("Starting application...");
+console.debug("Using env file", envFilePath);
 
 const HOUR = 1000 * 60 * 60;
 const stateFileName = "state.json";
@@ -261,11 +271,13 @@ function loadStateFromFile() {
 const onSIGINT = () => {
   console.log("SIGINT");
   bot.stop("SIGINT");
+  process.exit();
 };
 
 const onSIGTERM = () => {
   console.log("SIGTERM");
   bot.stop("SIGTERM");
+  process.exit();
 };
 
 // Enable graceful stop
