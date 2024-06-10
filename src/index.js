@@ -7,7 +7,13 @@ const { Telegraf, Telegram, Markup } = require("telegraf");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 const { Crawler } = require("./modules/crawler");
-const { initDefaultMetrics } = require("./modules/metrics");
+const {
+  initDefaultMetrics,
+  mBotRequestCount,
+  mBotErrorCount,
+  mBotNewClientCount,
+  mBotClients,
+} = require("./modules/metrics");
 
 const HOUR = 1000 * 60 * 60;
 const CRAWLER_DEFAULT_UDATE_INTERVAL = 1000 * 60 * 10;
@@ -54,12 +60,15 @@ let state = {};
 function getState(ctx) {
   const chatId = ctx.chat.id;
   if (!state[chatId]) {
+    mBotNewClientCount.inc();
     state[chatId] = defaultState();
   }
+  mBotClients.set(Object.keys(state).length || 0);
   return state[chatId];
 }
 
 bot.use(async (ctx, next) => {
+  mBotRequestCount.inc();
   await next();
 });
 
@@ -150,6 +159,7 @@ bot.action(/.+/, (ctx) => {
     try {
       saveStateToFile();
     } catch (err) {
+      mHttpBotErrorCount.inc();
       console.error(err);
     }
     return ctx.answerCbQuery(`Filters updated with ${JSON.stringify(data)}`);
@@ -171,6 +181,7 @@ async function subscribe(chatId) {
     try {
       await getHomeList(ctx, { silent: true });
     } catch (error) {
+      mHttpBotErrorCount.inc();
       console.error(error);
     }
   }, HOUR);
@@ -266,6 +277,7 @@ function saveStateToFile() {
   try {
     fs.writeFileSync(stateFile, data);
   } catch (err) {
+    mHttpBotErrorCount.inc();
     console.error(err);
   }
 }
@@ -280,6 +292,7 @@ function loadStateFromFile() {
     const loadedState = JSON.parse(data);
     state = loadedState;
   } catch (err) {
+    mHttpBotErrorCount.inc();
     console.error(err);
   }
 }

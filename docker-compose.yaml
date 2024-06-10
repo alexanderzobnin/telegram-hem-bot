@@ -5,6 +5,8 @@ services:
     restart: "on-failure"
     volumes:
       - "./data:/data"
+    ports:
+      - "8300:8300"
     environment:
       NODE_ENV: production
       DATA_DIR: "/data"
