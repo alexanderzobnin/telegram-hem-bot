@@ -5,12 +5,13 @@ const { getClients } = require("./clients/clients");
 const UDATE_INTERVAL = 1000 * 2;
 
 class Crawler {
-  constructor() {
+  constructor(updateInterval) {
     this.runId = 0;
     this.homesIndex = {};
     this.homes = [];
     this.subscribers = [];
     this.published = {};
+    this.updateInterval = updateInterval || UDATE_INTERVAL;
   }
 
   async run() {
@@ -26,7 +27,7 @@ class Crawler {
         await this.fetch();
 
         loop();
-      }, UDATE_INTERVAL);
+      }, this.updateInterval);
     };
 
     await this.fetch();

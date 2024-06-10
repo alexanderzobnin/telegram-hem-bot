@@ -2,6 +2,7 @@ const axios = require("axios");
 const { filterItems } = require("../../filter");
 const { sortBy } = require("../../sort");
 const { getDistanceKm, centralPoint } = require("../../geo");
+const { mHttpRequestCount } = require("../../metrics");
 
 const BASE_URL = "https://homeq.se";
 const BASE_SEARCH_URL = "https://search.homeq.se";
@@ -28,6 +29,8 @@ class Client {
     };
     try {
       const res = await axios.post(url, searchParams);
+      mHttpRequestCount.inc();
+
       const data = res.data.results;
       let homes = await this.convert(data);
       homes = filterItems(homes, filter);

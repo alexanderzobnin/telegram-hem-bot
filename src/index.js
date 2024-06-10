@@ -7,8 +7,10 @@ const { Telegraf, Telegram, Markup } = require("telegraf");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 const { Crawler } = require("./modules/crawler");
+const { initDefaultMetrics } = require("./modules/metrics");
 
 const HOUR = 1000 * 60 * 60;
+const CRAWLER_DEFAULT_UDATE_INTERVAL = 1000 * 60 * 10;
 
 const dataDir = process.env.DATA_DIR || "data";
 const stateFileName = "state.json";
@@ -25,9 +27,12 @@ if (process.env.NODE_ENV === "production") {
 
 require("dotenv").config({ path: envFilePath });
 
+const crawlerUpdateInterval = process.env.CRAWLER_UDATE_INTERVAL || CRAWLER_DEFAULT_UDATE_INTERVAL;
+
 console.log("Starting application...");
 console.log(`Environment is ${process.env.NODE_ENV || "development"}`);
 console.debug("Using env file", envFilePath);
+console.debug("Update interval (seconds):", crawlerUpdateInterval / 1000);
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
@@ -151,12 +156,10 @@ bot.action(/.+/, (ctx) => {
   }
 });
 
-bot.launch(onLaunch);
-
 async function onLaunch() {
   loadStateFromFile();
 
-  const crawler = new Crawler();
+  const crawler = new Crawler(crawlerUpdateInterval);
   crawler.run();
 }
 
@@ -280,6 +283,9 @@ function loadStateFromFile() {
     console.error(err);
   }
 }
+
+initDefaultMetrics();
+bot.launch(onLaunch);
 
 const onSIGINT = () => {
   console.log("SIGINT");

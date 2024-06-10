@@ -2,6 +2,7 @@ const axios = require("axios");
 const { filterItems } = require("../../filter");
 const { sortBy } = require("../../sort");
 const { getDistanceKm, centralPoint } = require("../../geo");
+const { mHttpRequestCount } = require("../../metrics");
 
 const BASE_URL = "https://bostad.stockholm.se";
 const GET_API_URL = `${BASE_URL}/AllaAnnonser`;
@@ -17,6 +18,8 @@ class Client {
     const url = this.list_homes_url;
     try {
       const res = await axios.get(url);
+      mHttpRequestCount.inc();
+
       const data = res.data;
       // console.log(data);
       let homes = await this.convert(data);
@@ -83,6 +86,8 @@ async function getImages(homeList = []) {
   const task = async (i) => {
     const item = homeList[i];
     const res = await axios.get(item.imageUrl);
+    mHttpRequestCount.inc();
+
     if (res.data) {
       item.images.push(res.data);
     }
