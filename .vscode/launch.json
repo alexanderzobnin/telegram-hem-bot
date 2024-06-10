@@ -9,8 +9,7 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/index.js",
-      "envFile": "${workspaceFolder}/.env"
+      "program": "${workspaceFolder}/src/index.js"
     }
   ]
 }
