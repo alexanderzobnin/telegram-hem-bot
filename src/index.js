@@ -1,11 +1,22 @@
 #!/usr/bin/env node
 
 const fs = require("node:fs");
+const path = require("node:path");
 const { Telegraf, Telegram, Markup } = require("telegraf");
 // const { message } = require("telegraf/filters");
 const { getClients } = require("./modules/clients/clients");
 const { formatMessage } = require("./modules/fmt/fmt");
 const { Crawler } = require("./modules/crawler");
+
+const HOUR = 1000 * 60 * 60;
+
+const dataDir = process.env.DATA_DIR || "data";
+const stateFileName = "state.json";
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
+const stateFile = path.join(dataDir, stateFileName);
 
 let envFilePath = ".env.dev";
 if (process.env.NODE_ENV === "production") {
@@ -15,10 +26,8 @@ if (process.env.NODE_ENV === "production") {
 require("dotenv").config({ path: envFilePath });
 
 console.log("Starting application...");
+console.log(`Environment is ${process.env.NODE_ENV || "development"}`);
 console.debug("Using env file", envFilePath);
-
-const HOUR = 1000 * 60 * 60;
-const stateFileName = "state.json";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const telegram = new Telegram(process.env.BOT_TOKEN);
@@ -252,19 +261,19 @@ function filterFetchedHomes(clientState, items = []) {
 function saveStateToFile() {
   const data = JSON.stringify(state);
   try {
-    fs.writeFileSync(stateFileName, data);
+    fs.writeFileSync(stateFile, data);
   } catch (err) {
     console.error(err);
   }
 }
 
 function loadStateFromFile() {
-  if (!fs.existsSync(stateFileName)) {
+  if (!fs.existsSync(stateFile)) {
     return;
   }
 
   try {
-    const data = fs.readFileSync(stateFileName, "utf8");
+    const data = fs.readFileSync(stateFile, "utf8");
     const loadedState = JSON.parse(data);
     state = loadedState;
   } catch (err) {
