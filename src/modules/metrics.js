@@ -44,7 +44,7 @@ async function runMetricsServer(port, host, register) {
   };
 
   const server = http.createServer(requestHandler);
-  server.listen(port, host, () => {
+  server.listen(port, () => {
     console.log(`Metrics server is running on http://${host}:${port}`);
   });
 }
