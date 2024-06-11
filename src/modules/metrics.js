@@ -18,6 +18,9 @@ async function runMetricsServer(port, host, register) {
       case "/metrics":
         await metricsHandler(req, res);
         break;
+      case "/health":
+        await healthHandler(req, res);
+        break;
       default:
         defaultHandler(req, res);
     }
@@ -28,6 +31,11 @@ async function runMetricsServer(port, host, register) {
     res.setHeader("Content-Type", register.contentType);
     res.writeHead(200);
     res.end(metrics);
+  };
+
+  const healthHandler = (req, res) => {
+    res.writeHead(200);
+    res.end();
   };
 
   const defaultHandler = (req, res) => {
