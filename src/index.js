@@ -56,7 +56,9 @@ const defaultState = () => ({
   fetched: {},
 });
 
-let state = {};
+let state = {
+  clients: {},
+};
 
 function getState(ctx) {
   const chatId = ctx.chat.id;
@@ -79,14 +81,11 @@ bot.start(async (ctx) => {
     "Select actions",
     Markup.keyboard([
       ["Show apartments", "Filters"],
-      ["Reset filters", "Reset cache"],
-    ])
-      .oneTime()
-      .resize()
+      ["Reset filters", "Reset cache", "Unsubscribe"],
+    ]).resize()
   );
 });
 
-bot.hears("hi", (ctx) => ctx.reply("Hey there"));
 bot.help((ctx) => ctx.reply("Send me a sticker"));
 
 bot.command("reset", (ctx) => {
@@ -107,8 +106,14 @@ bot.hears("Show apartments", async (ctx) => {
 });
 
 bot.hears(["subscribe", "sub", "s"], async (ctx) => {
-  console.log(`client ${ctx.chat.id} subscribed`);
   await subscribe(ctx.chat.id);
+});
+
+bot.hears(["unsubscribe", "Unsubscribe", "stop"], async (ctx) => {
+  const res = await unsubscribe(ctx.chat.id);
+  if (res) {
+    return ctx.reply("Unsubscribed");
+  }
 });
 
 bot.hears("Filters", async (ctx) => {
@@ -177,20 +182,61 @@ async function onLaunch() {
 
   const crawler = new Crawler(crawlerUpdateInterval);
   crawler.run();
+
+  for (const chatId in state.clients) {
+    state.clients[chatId] = null;
+    subscribe(chatId);
+  }
 }
 
 async function subscribe(chatId) {
   const ctx = {
     chat: { id: chatId },
   };
-  setInterval(async () => {
-    try {
-      await getHomeList(ctx, { silent: true });
-    } catch (error) {
-      mHttpBotErrorCount.inc();
-      console.error(error);
-    }
+
+  if (state.clients[chatId]) {
+    console.log(`client already subscribed, chat id: ${chatId}, sub id: ${state.clients[chatId]}`);
+    return;
+  }
+
+  // Random delay within 10 sec interval
+  const delay = Math.random() * 1000 * 10;
+  setTimeout(async () => {
+    fetchHomeList(ctx);
+  }, delay);
+
+  const intervalID = setInterval(async () => {
+    fetchHomeList(ctx);
   }, SUBSCRIBE_INTERVAL);
+
+  state.clients[chatId] = Number(intervalID);
+  console.log(`client ${ctx.chat.id} subscribed`);
+  saveStateToFile();
+}
+
+async function fetchHomeList(ctx) {
+  try {
+    await getHomeList(ctx, { silent: true });
+  } catch (error) {
+    mHttpBotErrorCount.inc();
+    console.error(error);
+  }
+}
+
+async function unsubscribe(chatId) {
+  const intervalID = state.clients[chatId];
+
+  if (!intervalID) {
+    console.log("client is not subscribed");
+    return false;
+  }
+
+  clearInterval(intervalID);
+  delete state.clients[chatId];
+  console.log(`client ${chatId} unsubscribed`);
+  saveStateToFile();
+
+  return true;
 }
 
 async function onStart(ctx) {
@@ -204,10 +250,8 @@ async function onStart(ctx) {
     "Select actions",
     Markup.keyboard([
       ["Show apartments", "Filters"],
-      ["Reset filters", "Reset cache"],
-    ])
-      .oneTime()
-      .resize()
+      ["Reset filters", "Reset cache", "Unsubscribe"],
+    ]).resize()
   );
 }
 
