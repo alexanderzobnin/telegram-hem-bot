@@ -15,8 +15,9 @@ const {
   mBotClients,
 } = require("./modules/metrics");
 
-const HOUR = 1000 * 60 * 60;
+const MINUTE = 1000 * 60;
 const CRAWLER_DEFAULT_UDATE_INTERVAL = 1000 * 60 * 10;
+const SUBSCRIBE_INTERVAL = MINUTE * 60;
 
 const dataDir = process.env.DATA_DIR || "data";
 const stateFileName = "state.json";
@@ -105,6 +106,11 @@ bot.hears("Show apartments", async (ctx) => {
   await subscribe(ctx.chat.id);
 });
 
+bot.hears(["subscribe", "sub", "s"], async (ctx) => {
+  console.log(`client ${ctx.chat.id} subscribed`);
+  await subscribe(ctx.chat.id);
+});
+
 bot.hears("Filters", async (ctx) => {
   return showFilters(ctx);
 });
@@ -184,7 +190,7 @@ async function subscribe(chatId) {
       mHttpBotErrorCount.inc();
       console.error(error);
     }
-  }, HOUR);
+  }, SUBSCRIBE_INTERVAL);
 }
 
 async function onStart(ctx) {
@@ -236,7 +242,7 @@ async function getHomeList(ctx, options = {}) {
   }
 
   if (homes.length === 0) {
-    console.log("No apartments found with given criteria");
+    console.log(`No apartments found with given criteria for client ${chatId}`);
   }
   if (homes.length === 0 && hasFetched && !options.silent) {
     telegram.sendMessage(chatId, "No new apartments found with given criteria");
@@ -246,19 +252,32 @@ async function getHomeList(ctx, options = {}) {
 
   for (let i = 0; i < homes.length; i++) {
     const home = homes[i];
-    if (home.imageUrl) {
+    sendMessage(telegram, chatId, home);
+  }
+
+  saveStateToFile();
+}
+
+async function sendMessage(telegram, chatId, home) {
+  if (home.imageUrl) {
+    try {
       await telegram.sendPhoto(chatId, home.imageUrl, {
         caption: formatMessage(home),
         parse_mode: "MarkdownV2",
       });
-    } else {
-      await telegram.sendMessage(chatId, formatMessage(home), {
-        parse_mode: "MarkdownV2",
-      });
+      return;
+    } catch (error) {
+      console.error(error);
     }
   }
 
-  saveStateToFile();
+  try {
+    await telegram.sendMessage(chatId, formatMessage(home), {
+      parse_mode: "MarkdownV2",
+    });
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function saveFetchedHomes(clientState, items) {
