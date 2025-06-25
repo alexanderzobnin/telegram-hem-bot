@@ -21,7 +21,6 @@ class Client {
       mHttpRequestCount.inc();
 
       const data = res.data;
-      // console.log(data);
       let homes = await this.convert(data);
       homes = filterItems(homes, filter);
       sortBy(homes, "price");
@@ -75,37 +74,8 @@ class Client {
       }
       list.push(item);
     }
-    // list = await getImages(list);
     return list;
   }
-}
-
-async function getImages(homeList = []) {
-  const promises = [];
-
-  const task = async (i) => {
-    const item = homeList[i];
-    const res = await axios.get(item.imageUrl);
-    mHttpRequestCount.inc();
-
-    if (res.data) {
-      item.images.push(res.data);
-    }
-  };
-
-  for (let i = 0; i < homeList.length; i++) {
-    promises.push(task(i));
-  }
-  await Promise.all(promises);
-  return homeList;
-}
-
-function getImageUrl(item) {
-  const width = 415;
-  const height = 280;
-  const desc = item.FirstImage;
-  const imagePath = `Content/ImageUrl?guid=${desc.Guid}&extension=${desc.Extension}&datechanged=${desc.DateChanged}&width=${width}&height=${height}`;
-  return `${BASE_URL}/${imagePath}`;
 }
 
 function getLink(item) {
