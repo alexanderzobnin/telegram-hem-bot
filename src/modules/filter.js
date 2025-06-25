@@ -4,13 +4,13 @@ function filterItems(items, filters) {
     filtered = filtered.filter((h) => h.rooms >= filters.rooms || h.roomsMax >= filters.rooms);
   }
   if (filters.price) {
-    filtered = filtered.filter((h) => h.price >= filters.price || h.priceMax >= filters.price);
+    filtered = filtered.filter((h) => h.price >= filters.price || h.priceMax >= filters.price || filters.price);
   }
   if (filters.size) {
     filtered = filtered.filter((h) => h.size >= filters.size || h.sizeMax >= filters.size);
   }
   if (filters.queueMin) {
-    filtered = filtered.filter((h) => !h.queueMin || h.queueMin <= filters.queueMin);
+    filtered = filtered.filter((h) => !h.queueMin || (filters.queueMin && h.queueMin <= filters.queueMin));
   }
   if (filters.distance) {
     filtered = filtered.filter((h) => !h.distance || h.distance <= filters.distance);

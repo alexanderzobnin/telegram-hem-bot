@@ -48,7 +48,7 @@ bot.use(Telegraf.log());
 const defaultState = () => ({
   filters: {
     rooms: 3,
-    price: 13000,
+    price: 0,
     size: 70,
     queueMin: 2,
     distance: 12,
@@ -139,11 +139,16 @@ function showFilters(ctx) {
         Markup.button.callback("3", `{"rooms":3}`),
         Markup.button.callback("4 or more", `{"rooms":4}`),
       ],
-      [Markup.button.callback("10 000 kr", `{"price":10000}`), Markup.button.callback("15 000 kr", `{"price":15000}`)],
+      [
+        Markup.button.callback("10 000 kr", `{"price":10000}`),
+        Markup.button.callback("15 000 kr", `{"price":15000}`),
+        Markup.button.callback("all", `{"price": null}`),
+      ],
       [
         Markup.button.callback("Queue < 2 years", `{"queueMin":2}`),
         Markup.button.callback("< 5 years", `{"queueMin":5}`),
         Markup.button.callback("< 10 years", `{"queueMin":10}`),
+        Markup.button.callback("all", `{"queueMin": null}`),
       ],
       [
         Markup.button.callback("Distance", "0"),
