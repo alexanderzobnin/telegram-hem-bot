@@ -62,12 +62,12 @@ let state = {
 
 function getState(ctx) {
   const chatId = ctx.chat.id;
-  if (!state[chatId]) {
+  if (!state.clients[chatId]) {
     mBotNewClientCount.inc();
-    state[chatId] = defaultState();
+    state.clients[chatId] = defaultState();
   }
-  mBotClients.set(Object.keys(state).length || 0);
-  return state[chatId];
+  mBotClients.set(Object.keys(state.clients).length || 0);
+  return state.clients[chatId];
 }
 
 bot.use(async (ctx, next) => {
@@ -241,8 +241,8 @@ async function unsubscribe(chatId) {
 
 async function onStart(ctx) {
   const chatId = ctx.chat.id;
-  if (!state[chatId]) {
-    state[chatId] = defaultState();
+  if (!state.clients[chatId]) {
+    state.clients[chatId] = defaultState();
   }
 
   await ctx.reply("Welcome to hembot! 🏡");
