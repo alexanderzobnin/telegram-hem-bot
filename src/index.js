@@ -89,10 +89,7 @@ bot.start(async (ctx) => {
 bot.help((ctx) => ctx.reply("Send me a sticker"));
 
 bot.command("reset", (ctx) => {
-  const clientState = getState(ctx);
-  clientState.fetched = {};
-  saveStateToFile();
-  ctx.reply("State reset");
+  onStateReset(ctx);
 });
 
 bot.command("show", async (ctx) => {
@@ -121,11 +118,11 @@ bot.hears("Filters", async (ctx) => {
 });
 
 bot.hears("Reset cache", async (ctx) => {
-  state.fetched = {};
+  onStateReset(ctx);
 });
 
 bot.hears("Reset filters", async (ctx) => {
-  state.filters = {};
+  onFiltersReset(ctx);
 });
 
 bot.command("filters", (ctx) => {
@@ -189,6 +186,20 @@ async function onLaunch() {
   }
 }
 
+async function onStateReset(ctx) {
+  const clientState = getState(ctx);
+  clientState.fetched = {};
+  saveStateToFile();
+  ctx.reply("State reset");
+}
+
+async function onFiltersReset(ctx) {
+  const clientState = getState(ctx);
+  clientState.filters = {};
+  saveStateToFile();
+  ctx.reply("Filters reset");
+}
+
 async function subscribe(chatId) {
   const ctx = {
     chat: { id: chatId },
@@ -209,7 +220,8 @@ async function subscribe(chatId) {
     fetchHomeList(ctx);
   }, SUBSCRIBE_INTERVAL);
 
-  state.clients[chatId] = Number(intervalID);
+  const clientState = getState(ctx);
+  clientState.intervalID = Number(intervalID);
   console.log(`client ${ctx.chat.id} subscribed`);
   saveStateToFile();
 }
@@ -224,7 +236,12 @@ async function fetchHomeList(ctx) {
 }
 
 async function unsubscribe(chatId) {
-  const intervalID = state.clients[chatId];
+  if (!state.clients[chatId]) {
+    console.log(`client ${chatId} is not subscribed`);
+    return false;
+  }
+
+  const intervalID = state.clients[chatId].intervalID;
 
   if (!intervalID) {
     console.log("client is not subscribed");
